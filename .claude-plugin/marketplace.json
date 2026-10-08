@@ -1,0 +1,14 @@
+{
+  "name": "daily-review",
+  "description": "The daily-review plugin for Claude Code.",
+  "owner": {
+    "name": "Muhammad Zubair"
+  },
+  "plugins": [
+    {
+      "name": "daily-review",
+      "source": "./",
+      "description": "End-of-day review of your team's latest commits against your plan and architecture docs. Reports only what is worth fixing, PR-style, and tracks unfixed issues from day to day."
+    }
+  ]
+}
