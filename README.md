@@ -1,6 +1,6 @@
 # daily-review
 
-A Claude Code plugin for tech leads who review their team's work every day.
+A Claude Code plugin for tech leads who review their team's work every day, and their pull requests.
 
 Run `/daily-review` at the end of the day. It reviews the commits pushed since your last review against your project's plan, specs and architecture docs, and reports only what is worth fixing:
 
@@ -11,6 +11,8 @@ Run `/daily-review` at the end of the day. It reviews the commits pushed since y
 - decisions the plan hasn't made yet, and who should make them
 
 The report is short and written like pull-request comments, with a separate list for each part of the codebase (for example backend and frontend). When nothing needs fixing, it's one line. Unfixed items carry over to the next day's review until they're fixed.
+
+Run `/review-pr` with a pull request's link to review it the same way and post the findings on the PR as a pending GitHub review, which you check and submit.
 
 ## Install
 
@@ -23,7 +25,7 @@ In Claude Code:
 
 Then run `/reload-plugins` or start a new session.
 
-**Requirements:** git and bash. Python 3 is used only to read Word (`.docx`) docs. Tested on macOS and Linux; Windows is untested (use Git Bash or WSL).
+**Requirements:** git and bash. Python 3 reads Word (`.docx`) docs and, for `/review-pr`, GitHub's replies. `/review-pr` also needs the [GitHub CLI](https://cli.github.com), logged in with `gh auth login`. Tested on macOS and Linux; Windows is untested (use Git Bash or WSL).
 
 ## First run
 
@@ -70,15 +72,43 @@ After a review you can say:
 - "Explain #2": it explains the finding with the code lines.
 - "Message for the developer": it rewrites the findings as a message you can send.
 
+## Review a pull request
+
+Run `/review-pr` from your clone of the repository, with the PR's link or number:
+
+```
+/review-pr https://github.com/acme/shop/pull/42
+```
+
+If another command already uses that name, run `/daily-review:review-pr`.
+
+It reviews the PR exactly as `/daily-review` reviews a day's commits, against the same `REVIEW.md` and docs, and saves the same report. Then it posts the findings on the PR as a **pending review**: inline comments on the lines they are about, with a one-click suggested change where the fix is small, and a summary for the rest. Nobody else sees a pending review. Open the PR's Files changed tab, read the comments, edit or delete any you disagree with, and submit the review yourself (Comment, Approve or Request changes). The plugin never submits, approves or requests changes for you.
+
+- **Your work stays as it is.** The PR is checked out in its own git worktree inside your repository's `.git` folder (`.git/review-pr/pr-<n>`), so your branch, staged files and uncommitted changes are never touched, and your test runners, linters and editor don't pick up the PR's files.
+- **It never runs the PR's code.** It reads the code and its history; the PR's tests, build scripts and git hooks don't run on your machine.
+- **A PR can't change the rules it is reviewed against.** `REVIEW.md` is read from the PR's base branch (or from your checkout when you are on that branch), never from the PR.
+- **It knows the context.** The PR description is taken as the developer's stated intent, and points other reviewers have already made are not repeated.
+- **Run it again after new commits** and it reviews only what changed since its last review of that PR, and lists what is still open and what was fixed.
+
+| Option | What it does |
+| --- | --- |
+| `--dry-run` | Write the review and its GitHub version, but post nothing |
+| `--full` | Review the whole PR again, ignoring earlier reviews of it |
+| `--rerun` | Review the same range as the last review of this PR |
+| `--clean` | Remove the PR's worktree (with no PR given, every PR's); the reports stay |
+
+The report is saved to `.reviews/pr-<n>/review-<n>-<date>_<time>.md`, and what goes to GitHub next to it, ending in `.github.md`. To change a posted review, ask for the change and say to replace the pending review; it deletes your pending review on that PR and posts the new one. When you're done with a PR, `/review-pr 42 --clean` removes its worktree.
+
 ## How it works
 
 - `scripts/scope.sh` picks the commits since the last review, writes the diff and converts Word documents to text.
 - Claude reads the change, asks you when something only you can answer would change the verdict, and writes the review.
 - For large changes it can hand parts of the reading to the `daily-reviewer` agent. The `review-verifier` agent re-checks findings against the code with fresh eyes before you see them. Both are read-only and run on Opus.
+- For a pull request, `skills/review-pr/scripts/pr.sh` fetches the PR with `gh` and `git`, checks it out in a worktree and runs `scope.sh` there. `post_review.py` places each comment on the PR's diff and creates the pending review through `gh api`.
 
 ## Cost
 
-A small day's changes took about 200K tokens in testing. Large ranges, and the first review of a long branch, cost more.
+A small day's changes took about 200K tokens in testing. Large ranges, the first review of a long branch, and large pull requests cost more.
 
 ## License
 

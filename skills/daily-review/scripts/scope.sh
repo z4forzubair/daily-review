@@ -14,6 +14,13 @@
 #   --rerun          review the same range as the last review again
 #   --architecture   no commit range: prepare a whole-system architecture review
 #
+# Environment (set by /review-pr, which runs this inside a PR worktree; unset, nothing changes):
+#   DAILY_REVIEW_LOG_ROOT      folder for logs and scratch files instead of .reviews
+#   DAILY_REVIEW_SLUG          log folder name instead of the branch name
+#   DAILY_REVIEW_BRANCH        branch label shown in the report and the log
+#   DAILY_REVIEW_REVIEW_MD     REVIEW.md to use instead of the one in the checkout ("none": no REVIEW.md)
+#   DAILY_REVIEW_REVIEW_MD_NOTE  why that file is used, shown next to it
+#
 # Sources of truth are the files listed under "## Sources of truth" in REVIEW.md.
 # They are read from the repository. Word and PDF files are converted to text in the
 # scratch folder (.reviews/.work) on every run; that text is never kept as a copy.
@@ -54,7 +61,9 @@ cd "$ROOT" || fail "cannot open $ROOT"
 HEAD_SHA=$(git rev-parse --verify -q HEAD) || fail "this repository has no commits"
 HEAD7=$(git rev-parse --short HEAD)
 BRANCH=$(git symbolic-ref --short -q HEAD 2>/dev/null) || BRANCH="detached-$HEAD7"
+[ -n "${DAILY_REVIEW_BRANCH:-}" ] && BRANCH="$DAILY_REVIEW_BRANCH"
 SLUG=$(printf '%s' "$BRANCH" | sed -e 's#/#__#g' -e 's#[^A-Za-z0-9._-]#-#g')
+[ -n "${DAILY_REVIEW_SLUG:-}" ] && SLUG="$DAILY_REVIEW_SLUG"
 EMPTY_TREE=$(git hash-object -t tree /dev/null)
 is_commit() { git rev-parse --verify -q "$1^{commit}" >/dev/null 2>&1; }
 
@@ -63,7 +72,7 @@ if [ -n "${RANGE_END:-}" ] && [ "$RANGE_END" != "HEAD" ]; then
   [ "$END_SHA" = "$HEAD_SHA" ] || fail "reviews always end at the checked-out commit. Check out $RANGE_END first, then run with --since ${SINCE}"
 fi
 
-LOG_ROOT=".reviews"
+LOG_ROOT="${DAILY_REVIEW_LOG_ROOT:-.reviews}"
 LOG_DIR="$LOG_ROOT/$SLUG"
 WORK="$LOG_ROOT/.work/$SLUG"
 mkdir -p "$LOG_DIR" "$WORK" 2>/dev/null || fail "cannot create $LOG_DIR (check folder permissions)"
@@ -98,14 +107,19 @@ if [ -z "$DEFAULT_REF" ]; then
 fi
 
 rm -f "$WORK/REVIEW.base.md"
-REVIEW_MD="none"
-if [ -f REVIEW.md ]; then
-  REVIEW_MD="REVIEW.md"
+REVIEW_MD="none"; REVIEW_FILE="none"
+if [ "${DAILY_REVIEW_REVIEW_MD:-}" = "none" ]; then
+  REVIEW_MD="none (${DAILY_REVIEW_REVIEW_MD_NOTE:-set by the caller})"
+elif [ -n "${DAILY_REVIEW_REVIEW_MD:-}" ] && [ -f "$DAILY_REVIEW_REVIEW_MD" ]; then
+  REVIEW_FILE="$DAILY_REVIEW_REVIEW_MD"
+  REVIEW_MD="$REVIEW_FILE (${DAILY_REVIEW_REVIEW_MD_NOTE:-set by the caller})"
+elif [ -f REVIEW.md ]; then
+  REVIEW_FILE="REVIEW.md"; REVIEW_MD="REVIEW.md"
 elif [ -n "$DEFAULT_REF" ] && git cat-file -e "$DEFAULT_REF:REVIEW.md" 2>/dev/null; then
   git show "$DEFAULT_REF:REVIEW.md" > "$WORK/REVIEW.base.md" 2>/dev/null
-  REVIEW_MD="$WORK/REVIEW.base.md (copied from $DEFAULT_REF; this branch has no REVIEW.md)"
+  REVIEW_FILE="$WORK/REVIEW.base.md"
+  REVIEW_MD="$REVIEW_FILE (copied from $DEFAULT_REF; this branch has no REVIEW.md)"
 fi
-REVIEW_FILE="${REVIEW_MD%% *}"
 
 BASE_NAME="$BASE_OVERRIDE"
 if [ -z "$BASE_NAME" ] && [ "$REVIEW_FILE" != "none" ]; then

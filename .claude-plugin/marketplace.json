@@ -8,7 +8,7 @@
     {
       "name": "daily-review",
       "source": "./",
-      "description": "End-of-day review of your team's latest commits against your plan and architecture docs. Reports only what is worth fixing, PR-style, and tracks unfixed issues from day to day."
+      "description": "Code review for tech leads, against your plan and architecture docs. /daily-review reviews your team's latest commits each day; /review-pr reviews a pull request and posts the findings on GitHub as a pending review you submit. Reports only what is worth fixing."
     }
   ]
 }
