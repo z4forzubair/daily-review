@@ -1,0 +1,5 @@
+interface:
+  display_name: "Daily review"
+  short_description: "Review your team's latest commits against your plan and docs"
+policy:
+  allow_implicit_invocation: false

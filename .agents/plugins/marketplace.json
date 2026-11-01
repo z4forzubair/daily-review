@@ -1,0 +1,17 @@
+{
+  "name": "daily-review",
+  "plugins": [
+    {
+      "name": "daily-review",
+      "source": {
+        "source": "local",
+        "path": "./codex"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

@@ -14,7 +14,7 @@
 #   --rerun          review the same range as the last review again
 #   --architecture   no commit range: prepare a whole-system architecture review
 #
-# Environment (set by /review-pr, which runs this inside a PR worktree; unset, nothing changes):
+# Environment (set by review-pr's pr.sh, which runs this inside a PR worktree; unset, nothing changes):
 #   DAILY_REVIEW_LOG_ROOT      folder for logs and scratch files instead of .reviews
 #   DAILY_REVIEW_SLUG          log folder name instead of the branch name
 #   DAILY_REVIEW_BRANCH        branch label shown in the report and the log

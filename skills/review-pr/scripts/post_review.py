@@ -5,7 +5,7 @@ Usage:
   post_review.py DRAFT [--dry-run] [--replace-pending]
   post_review.py --ranges --info PR_JSON     print the lines that inline comments can go on
 
-DRAFT is the .github.md file that /review-pr writes next to the review log:
+DRAFT is the .github.md file that the review-pr skill writes next to the review log:
 
     # Summary
     The review's top-level text.
@@ -369,10 +369,10 @@ def main(argv):
     try:
         info = json.load(open(info_path, encoding="utf-8"))
     except (OSError, ValueError):
-        die("cannot read the PR details in %s; run /review-pr for this PR first" % info_path, 2)
+        die("cannot read the PR details in %s; run pr.sh for this PR first" % info_path, 2)
     cwd = info.get("tree") if os.path.isdir(info.get("tree") or "") else info.get("checkout")
     if not cwd or not os.path.isdir(cwd):
-        die("cannot find the PR's checkout (%s); run /review-pr for this PR again" % info.get("tree"), 2)
+        die("cannot find the PR's checkout (%s); run pr.sh for this PR again" % info.get("tree"), 2)
 
     if args["ranges"]:
         files = pr_diff(cwd, info["merge_base"], info["head_sha"])
@@ -402,7 +402,7 @@ def main(argv):
         warnings.append("could not read 'head:' from the review log next to the draft; using the PR head %s" % head[:7])
     rc, full, _ = git(["rev-parse", "--verify", "-q", head + "^{commit}"], cwd)
     if rc != 0:
-        die("the reviewed commit %s is not in this repository; run /review-pr again" % head, 2)
+        die("the reviewed commit %s is not in this repository; run pr.sh for this PR again" % head, 2)
     head = full.strip()
     rc, mb, _ = git(["merge-base", info["base_ref"], head], cwd)
     base = mb.strip() if rc == 0 and mb.strip() else info["merge_base"]

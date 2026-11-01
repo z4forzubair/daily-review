@@ -1,0 +1,17 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: The Codex plugin matches the Claude Code sources
+        run: python3 tools/build_codex.py --check
+      - name: Scripts parse
+        run: |
+          for f in skills/*/scripts/*.sh; do bash -n "$f"; done
+          python3 -m py_compile skills/*/scripts/*.py tools/build_codex.py

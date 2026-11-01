@@ -40,7 +40,7 @@ while [ $# -gt 0 ]; do
 done
 
 command -v git >/dev/null 2>&1 || fail "git is not installed"
-git rev-parse --show-toplevel >/dev/null 2>&1 || fail "not inside a git repository; run /review-pr from your clone of the PR's repository"
+git rev-parse --show-toplevel >/dev/null 2>&1 || fail "not inside a git repository; run the PR review from your clone of the PR's repository"
 # Your own checkout, even when this runs from inside a PR worktree.
 MAIN=$(git worktree list --porcelain 2>/dev/null | sed -n '1s/^worktree //p')
 [ -n "$MAIN" ] && [ -d "$MAIN" ] || MAIN=$(git rev-parse --show-toplevel)
@@ -83,8 +83,8 @@ if [ "$CLEAN" = 1 ]; then
   exit 0
 fi
 
-[ -f "$SCOPE" ] || fail "cannot find daily-review's scope.sh at $SCOPE; reinstall the daily-review plugin"
-[ -n "$PR_ARG" ] || fail "give a pull request link or number, for example /review-pr https://github.com/owner/repo/pull/12"
+[ -f "$SCOPE" ] || fail "cannot find daily-review's scope.sh at $SCOPE; review-pr needs the daily-review skill installed next to it"
+[ -n "$PR_ARG" ] || fail "give a pull request link or number, for example https://github.com/owner/repo/pull/12"
 command -v gh >/dev/null 2>&1 || fail "the GitHub CLI (gh) is not installed. Install it from https://cli.github.com, then run: gh auth login"
 command -v python3 >/dev/null 2>&1 || fail "python3 is needed to read the GitHub CLI's output"
 
@@ -154,7 +154,7 @@ else:
 [ -n "$CHECKS" ] || CHECKS="unknown (gh could not read them)"
 REPO_SLUG="$PR_OWNER/$PR_REPO"
 case "$PR_STATE" in
-  MERGED) fail "PR #$PR_NUM is already merged. /review-pr reviews open pull requests; to review the merged code, use /daily-review on $PR_BASE" ;;
+  MERGED) fail "PR #$PR_NUM is already merged. review-pr reviews open pull requests; to review the merged code, use daily-review on $PR_BASE" ;;
   CLOSED) add_warn "PR #$PR_NUM is closed; GitHub still accepts review comments on it" ;;
 esac
 
@@ -175,7 +175,7 @@ for r in $(git remote); do
   [ -z "$BY_PATH" ] && [ "${n#*/}" = "$want_path" ] && BY_PATH="$r"
 done
 [ -n "$REMOTE" ] || REMOTE="$BY_PATH"
-[ -n "$REMOTE" ] || fail "this clone has no remote for $REPO_SLUG. Run /review-pr from a clone of it, or add the remote: git remote add upstream https://$PR_HOST/$REPO_SLUG.git"
+[ -n "$REMOTE" ] || fail "this clone has no remote for $REPO_SLUG. Run the PR review from a clone of it, or add the remote: git remote add upstream https://$PR_HOST/$REPO_SLUG.git"
 
 # ---- Fetch the PR head and its base branch (this only updates remote-tracking refs)
 git fetch --quiet --no-tags "$REMOTE" "refs/pull/$PR_NUM/head" 2> "$TMPD/fetch.err" \
@@ -333,7 +333,7 @@ SCOPE_OUT=$(cd "$TREE" && DAILY_REVIEW_LOG_ROOT="$REV" DAILY_REVIEW_SLUG="pr-$PR
   bash "$SCOPE" --base "$BASE_REF" $PASS 2>&1)
 LOG_FILE=$(printf '%s\n' "$SCOPE_OUT" | sed -n 's/^log_file: //p' | head -n 1)
 PREV_LOG=$(printf '%s\n' "$SCOPE_OUT" | sed -n 's/^previous_review: \(.*\.md\).*/\1/p' | head -n 1)
-# Before its first PR review, the lead may have reviewed this branch with /daily-review.
+# Before its first PR review, the lead may have reviewed this branch with daily-review.
 BRANCH_REVIEW=""
 if [ -z "$PREV_LOG" ] && [ -n "$LOG_FILE" ] && [ "$PR_FORK" = "no" ] && [ "$PR_HEAD_BRANCH" != "$PR_BASE" ]; then
   BSLUG=$(printf '%s' "$PR_HEAD_BRANCH" | sed -e 's#/#__#g' -e 's#[^A-Za-z0-9._-]#-#g')
@@ -369,7 +369,7 @@ out "your_pending_review: ${MY_PENDING:-none}"
 out "commentable_lines: $COMMENTABLE"
 [ -n "$LOG_FILE" ] && out "github_draft: ${LOG_FILE%.md}.github.md"
 [ -n "$PREV_DRAFT" ] && out "previous_draft: $PREV_DRAFT"
-[ -n "$BRANCH_REVIEW" ] && out "branch_review: $BRANCH_REVIEW (your last /daily-review of $PR_HEAD_BRANCH)"
+[ -n "$BRANCH_REVIEW" ] && out "branch_review: $BRANCH_REVIEW (your last daily-review of $PR_HEAD_BRANCH)"
 if [ -n "$WARN" ]; then out "pr_warnings:"; printf '%s' "$WARN"; else out "pr_warnings: none"; fi
 out ""
 out "--- scope (daily-review) ---"

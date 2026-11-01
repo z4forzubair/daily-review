@@ -1,8 +1,8 @@
 # daily-review
 
-A Claude Code plugin for tech leads who review their team's work every day, and their pull requests.
+Code review for tech leads who review their team's work every day, and their pull requests. Works in **Claude Code** and **Codex**.
 
-Run `/daily-review` at the end of the day. It reviews the commits pushed since your last review against your project's plan, specs and architecture docs, and reports only what is worth fixing:
+Run `/daily-review` (`$daily-review` in Codex) at the end of the day. It reviews the commits pushed since your last review against your project's plan, specs and architecture docs, and reports only what is worth fixing:
 
 - bugs and missed edge cases
 - work that doesn't match the plan or the task
@@ -12,11 +12,13 @@ Run `/daily-review` at the end of the day. It reviews the commits pushed since y
 
 The report is short and written like pull-request comments, with a separate list for each part of the codebase (for example backend and frontend). When nothing needs fixing, it's one line. Unfixed items carry over to the next day's review until they're fixed.
 
-Run `/review-pr` with a pull request's link to review it the same way and post the findings on the PR as a pending GitHub review, which you check and submit.
+Run `/review-pr` (`$review-pr` in Codex) with a pull request's link to review it the same way and post the findings on the PR as a pending GitHub review, which you check and submit.
+
+Both agents use the same `REVIEW.md` and the same `.reviews/` folder, so you can switch between them on one repository and keep the numbering and open items.
 
 ## Install
 
-In Claude Code:
+### Claude Code
 
 ```
 /plugin marketplace add z4forzubair/daily-review
@@ -25,11 +27,34 @@ In Claude Code:
 
 Then run `/reload-plugins` or start a new session.
 
-**Requirements:** git and bash. Python 3 reads Word (`.docx`) docs and, for `/review-pr`, GitHub's replies. `/review-pr` also needs the [GitHub CLI](https://cli.github.com), logged in with `gh auth login`. Tested on macOS and Linux; Windows is untested (use Git Bash or WSL).
+### Codex
+
+As a plugin:
+
+```
+codex plugin marketplace add z4forzubair/daily-review
+```
+
+Then open `/plugins` in Codex, install **daily-review**, and start a new session.
+
+Or as skills, which any Codex version with skills support can load:
+
+```
+git clone https://github.com/z4forzubair/daily-review ~/.daily-review
+mkdir -p ~/.agents/skills
+ln -s ~/.daily-review/codex/skills/daily-review ~/.agents/skills/daily-review
+ln -s ~/.daily-review/codex/skills/review-pr ~/.agents/skills/review-pr
+```
+
+Update them later with `git -C ~/.daily-review pull`.
+
+In Codex, type `$daily-review` or `$review-pr <PR link>`, or pick them from `/skills`. Codex keeps commands in a sandbox without network access, so it asks you to approve the steps that fetch the PR, post the review, or write to `.git`. The review itself runs inside the sandbox.
+
+**Requirements:** git and bash. Python 3 reads Word (`.docx`) docs and, for pull requests, GitHub's replies. Pull-request reviews also need the [GitHub CLI](https://cli.github.com), logged in with `gh auth login`. Tested on macOS and Linux; Windows is untested (use Git Bash or WSL).
 
 ## First run
 
-Run `/daily-review` in a git repository. If another command already uses that name, run `/daily-review:daily-review`.
+Run `/daily-review` in a git repository (`$daily-review` in Codex). In Claude Code, if another command already uses that name, run `/daily-review:daily-review`.
 
 On the first run it looks for plan, spec and architecture documents, asks you which ones to review against, and creates `REVIEW.md` at the repository root. Commit that file, so everyone reviews against the same documents.
 
@@ -74,13 +99,13 @@ After a review you can say:
 
 ## Review a pull request
 
-Run `/review-pr` from your clone of the repository, with the PR's link or number:
+Run `/review-pr` (`$review-pr` in Codex) from your clone of the repository, with the PR's link or number:
 
 ```
 /review-pr https://github.com/acme/shop/pull/42
 ```
 
-If another command already uses that name, run `/daily-review:review-pr`.
+In Claude Code, if another command already uses that name, run `/daily-review:review-pr`.
 
 It reviews the PR exactly as `/daily-review` reviews a day's commits, against the same `REVIEW.md` and docs, and saves the same report. Then it posts the findings on the PR as a **pending review**: inline comments on the lines they are about, with a one-click suggested change where the fix is small, and a summary for the rest. Nobody else sees a pending review. Open the PR's Files changed tab, read the comments, edit or delete any you disagree with, and submit the review yourself (Comment, Approve or Request changes). The plugin never submits, approves or requests changes for you.
 
@@ -102,9 +127,10 @@ The report is saved to `.reviews/pr-<n>/review-<n>-<date>_<time>.md`, and what g
 ## How it works
 
 - `scripts/scope.sh` picks the commits since the last review, writes the diff and converts Word documents to text.
-- Claude reads the change, asks you when something only you can answer would change the verdict, and writes the review.
-- For large changes it can hand parts of the reading to the `daily-reviewer` agent. The `review-verifier` agent re-checks findings against the code with fresh eyes before you see them. Both are read-only and run on Opus.
+- The agent reads the change, asks you when something only you can answer would change the verdict, and writes the review.
+- For large changes it can hand parts of the reading to a read-only `daily-reviewer` subagent, and a `review-verifier` subagent re-checks findings against the code with fresh eyes before you see them. In Claude Code both run on Opus.
 - For a pull request, `skills/review-pr/scripts/pr.sh` fetches the PR with `gh` and `git`, checks it out in a worktree and runs `scope.sh` there. `post_review.py` places each comment on the PR's diff and creates the pending review through `gh api`.
+- The Claude Code plugin in `skills/` and `agents/` is the source. `tools/build_codex.py` builds the Codex plugin in `codex/` from it: the same scripts and the same review guidance word for word, with the Claude-only parts (commands run when a skill loads, plugin subagents) rewritten for Codex.
 
 ## Cost
 

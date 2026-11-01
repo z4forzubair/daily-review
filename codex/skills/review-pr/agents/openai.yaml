@@ -1,0 +1,5 @@
+interface:
+  display_name: "Review a pull request"
+  short_description: "Review a GitHub PR and post it as a pending review"
+policy:
+  allow_implicit_invocation: false

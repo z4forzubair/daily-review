@@ -1,0 +1,25 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "daily-review",
+  "version": "1.2.0",
+  "description": "Code review for tech leads, against your plan and architecture docs. $daily-review reviews your team's latest commits; $review-pr reviews a GitHub pull request and posts it as a pending review you submit. Reports only what is worth fixing.",
+  "author": {
+    "name": "Muhammad Zubair",
+    "url": "https://github.com/z4forzubair"
+  },
+  "homepage": "https://github.com/z4forzubair/daily-review",
+  "repository": "https://github.com/z4forzubair/daily-review",
+  "license": "MIT",
+  "keywords": [
+    "code-review",
+    "review",
+    "pull-request",
+    "github",
+    "tech-lead",
+    "plan",
+    "architecture",
+    "tests",
+    "codex",
+    "codex"
+  ]
+}
