@@ -8,7 +8,7 @@
     {
       "name": "daily-review",
       "source": "./",
-      "description": "Code review for tech leads, against your plan and architecture docs, in Claude Code and Codex. /daily-review reviews your team's latest commits each day; /review-pr reviews a pull request and posts the findings on GitHub as a pending review you submit. Reports only what is worth fixing."
+      "description": "Code review for tech leads, against your plan and architecture docs, in Claude Code, Codex and Cursor. /daily-review reviews your team's latest commits each day; /review-pr reviews a pull request and posts the findings on GitHub as a pending review you submit. Reports only what is worth fixing."
     }
   ]
 }

@@ -1,0 +1,13 @@
+{
+  "name": "daily-review",
+  "owner": {
+    "name": "Muhammad Zubair"
+  },
+  "plugins": [
+    {
+      "name": "daily-review",
+      "source": "cursor",
+      "description": "Code review for tech leads, against your plan and architecture docs. /daily-review reviews your team's latest commits; /review-pr reviews a GitHub pull request and posts it as a pending review you submit."
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Review instructions
 
-Read by the daily-review and review-pr skills, in Claude Code and Codex. Keep it short: every line reaches every reviewer.
+Read by the daily-review and review-pr skills, in Claude Code, Codex and Cursor. Keep it short: every line reaches every reviewer.
 
 Base branch: main
 

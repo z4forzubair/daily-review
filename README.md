@@ -1,6 +1,6 @@
 # daily-review
 
-Code review for tech leads who review their team's work every day, and their pull requests. Works in **Claude Code** and **Codex**.
+Code review for tech leads who review their team's work every day, and their pull requests. Works in **Claude Code**, **Codex** and **Cursor**.
 
 Run `/daily-review` (`$daily-review` in Codex) at the end of the day. It reviews the commits pushed since your last review against your project's plan, specs and architecture docs, and reports only what is worth fixing:
 
@@ -14,7 +14,7 @@ The report is short and written like pull-request comments, with a separate list
 
 Run `/review-pr` (`$review-pr` in Codex) with a pull request's link to review it the same way and post the findings on the PR as a pending GitHub review, which you check and submit.
 
-Both agents use the same `REVIEW.md` and the same `.reviews/` folder, so you can switch between them on one repository and keep the numbering and open items.
+All three use the same `REVIEW.md` and the same `.reviews/` folder, so you can switch between them on one repository and keep the numbering and open items.
 
 ## Install
 
@@ -49,6 +49,25 @@ ln -s ~/.daily-review/codex/skills/review-pr ~/.agents/skills/review-pr
 Update them later with `git -C ~/.daily-review pull`.
 
 In Codex, type `$daily-review` or `$review-pr <PR link>`, or pick them from `/skills`. Codex keeps commands in a sandbox without network access, so it asks you to approve the steps that fetch the PR, post the review, or write to `.git`. The review itself runs inside the sandbox.
+
+### Cursor
+
+As a plugin: in Cursor, open **Customize**, choose **From GitHub Repository**, enter `z4forzubair/daily-review`, and install **daily-review**. That adds the two skills and the two read-only reviewer subagents.
+
+Or as skills and subagents:
+
+```
+git clone https://github.com/z4forzubair/daily-review ~/.daily-review
+mkdir -p ~/.cursor/skills ~/.cursor/agents
+ln -s ~/.daily-review/cursor/skills/daily-review ~/.cursor/skills/daily-review
+ln -s ~/.daily-review/cursor/skills/review-pr ~/.cursor/skills/review-pr
+ln -s ~/.daily-review/cursor/agents/daily-reviewer.md ~/.cursor/agents/daily-reviewer.md
+ln -s ~/.daily-review/cursor/agents/review-verifier.md ~/.cursor/agents/review-verifier.md
+```
+
+Skip the `git clone` if you already cloned the repository for Codex. Cursor also loads skills from `~/.agents/skills`, so if you linked the Codex skills there, Cursor shows each skill twice: install it as a plugin in one of the two.
+
+In Cursor's Agent chat, type `/daily-review` or `/review-pr <PR link>`. Cursor runs commands in its sandbox where it can; the steps that fetch the PR and post the review call GitHub, so they may need to run outside it, and Cursor asks you when it needs to.
 
 **Requirements:** git and bash. Python 3 reads Word (`.docx`) docs and, for pull requests, GitHub's replies. Pull-request reviews also need the [GitHub CLI](https://cli.github.com), logged in with `gh auth login`. Tested on macOS and Linux; Windows is untested (use Git Bash or WSL).
 
@@ -128,9 +147,9 @@ The report is saved to `.reviews/pr-<n>/review-<n>-<date>_<time>.md`, and what g
 
 - `scripts/scope.sh` picks the commits since the last review, writes the diff and converts Word documents to text.
 - The agent reads the change, asks you when something only you can answer would change the verdict, and writes the review.
-- For large changes it can hand parts of the reading to a read-only `daily-reviewer` subagent, and a `review-verifier` subagent re-checks findings against the code with fresh eyes before you see them. In Claude Code both run on Opus.
+- For large changes it can hand parts of the reading to a read-only `daily-reviewer` subagent, and a `review-verifier` subagent re-checks findings against the code with fresh eyes before you see them. The Claude Code and Cursor plugins ship both subagents (on Opus in Claude Code; on your chosen model in Cursor), and in Codex the skill spawns them from instructions in the skill.
 - For a pull request, `skills/review-pr/scripts/pr.sh` fetches the PR with `gh` and `git`, checks it out in a worktree and runs `scope.sh` there. `post_review.py` places each comment on the PR's diff and creates the pending review through `gh api`.
-- The Claude Code plugin in `skills/` and `agents/` is the source. `tools/build_codex.py` builds the Codex plugin in `codex/` from it: the same scripts and the same review guidance word for word, with the Claude-only parts (commands run when a skill loads, plugin subagents) rewritten for Codex.
+- The Claude Code plugin in `skills/` and `agents/` is the source. `tools/build.py` builds the Codex plugin in `codex/` and the Cursor plugin in `cursor/` from it: the same scripts and the same review guidance word for word, with the Claude-only parts (commands run when a skill loads, plugin subagents) rewritten for each agent.
 
 ## Cost
 
